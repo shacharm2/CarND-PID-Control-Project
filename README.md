@@ -97,6 +97,11 @@ Once transitioning from a straight line to a curved course, the PID controller o
 
 Moreover, the twiddle algorithm, which favors low average CTE, does not consider steady state small oscillations, which are important to get rid of as well.
 
+# Additional ideas
+
+- Adding PID controllers to both the angle and speed
+
+- Adding an EKF (Extended Kalman Filter) to estimate the target physical state space location and angle to hit
 
 # References
 
