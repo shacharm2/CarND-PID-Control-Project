@@ -48,7 +48,6 @@ int main()
 
 
   // TODO: Initialize the pid variable.
-  bool tuning_phase = true;
   twiddle* twiddle_tune = new twiddle();
   pid.Init(twiddle_tune->Kp, twiddle_tune->Ki, twiddle_tune->Kd);
   //pid.Init(0.1, 0, 0);

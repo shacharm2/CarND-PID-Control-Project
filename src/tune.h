@@ -45,8 +45,6 @@ public:
 	twiddle();
 
 	~twiddle() {}
-	std::vector<double> get_params();
-	std::vector<double> set_params(const double Kp, const double Kd, const double Ki, const unsigned int& tune_param);
 	void update(const double& cte);
 	bool updated;
 
@@ -121,19 +119,6 @@ twiddle::twiddle()
 	}
 	else if ((2 == this->tune_param) && (0 == this->twiddle_stage)) {
 		this->Kd += this->dKd;
-	}
-}
-
-std::vector<double> twiddle::get_params()
-{
-	return std::vector<double>({this->Kp, this->Kd, this->Ki});
-}
-
-std::vector<double> twiddle::set_params(const double Kp, const double Kd, const double Ki, const unsigned int& tune_param)
-{
-	std::ofstream params_stream(this->parameters_file.c_str());
-	if (!params_stream.is_open()) {
-		throw "Division by zero condition!";
 	}
 }
 
