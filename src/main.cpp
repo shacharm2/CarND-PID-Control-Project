@@ -30,19 +30,31 @@ std::string hasData(std::string s) {
   return "";
 }
 
+
+
+// Reset the car back to starting position, and it can be used in twiddle
+void restart(uWS::WebSocket<uWS::SERVER> ws){
+  std::string reset_msg = "42[\"reset\",{}]";
+  ws.send(reset_msg.data(), reset_msg.length(), uWS::OpCode::TEXT);
+}
+
+
 int main()
 {
   uWS::Hub h;
 
   PID pid;
+  std::ofstream outfile("../output/speed30.csv");
+
 
   // TODO: Initialize the pid variable.
   bool tuning_phase = true;
-  twiddle twiddle_tune;
-  pid.Init(twiddle_tune.Kp, twiddle_tune.Ki, twiddle_tune.Kd);
+  twiddle* twiddle_tune = new twiddle();
+  pid.Init(twiddle_tune->Kp, twiddle_tune->Ki, twiddle_tune->Kd);
   //pid.Init(0.1, 0, 0);
+  vector<double> last_steering({0, 0});
 
-  h.onMessage([&pid, &twiddle_tune](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
+  h.onMessage([&pid, &last_steering, &twiddle_tune, &outfile](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
@@ -64,21 +76,28 @@ int main()
           * NOTE: Feel free to play around with the throttle and speed. Maybe use
           * another PID controller to control the speed!
           */
-
+          outfile.open("../output/speed30.csv", std::ios_base::app);
+          outfile << cte << ",";
+          outfile.close();
           pid.UpdateError(cte);
           steer_value = pid.TotalError();
-          // smooth
-          double smoother = 0.75;
-          steer_value = smoother * steer_value + (1-smoother) * deg2rad(angle);
- 
 
           // DEBUG
           std::cout << "CTE: " << cte << " Steering Value: " << steer_value << std::endl;
-          twiddle_tune.update(cte);
-
+          twiddle_tune->update(cte);
+          if (twiddle_tune->updated)
+          {
+            cout << "restarting" << endl;
+            delete twiddle_tune;
+            twiddle_tune = new twiddle();
+            pid.Init(twiddle_tune->Kp, twiddle_tune->Ki, twiddle_tune->Kd);
+            
+            steer_value = 0;
+            restart(ws);
+          }
           json msgJson;
           msgJson["steering_angle"] = steer_value;
-          msgJson["throttle"] = 0.2;
+          msgJson["throttle"] = 0.3;
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
           std::cout << msg << std::endl;
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
